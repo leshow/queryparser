@@ -8,13 +8,14 @@ packages:
 - '.'
 - 'test'
 - 'demo'
+- 'querysplainer'
 - 'misc/predicate-class'
 - 'dialects/vertica'
 - 'dialects/hive'
 - 'dialects/presto'
 
-docker:
-    enable: true
+# docker:
+#     enable: true
 
 # Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
 extra-deps: [ 'test-framework-quickcheck-0.3.0'
