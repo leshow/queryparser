@@ -7,13 +7,13 @@ import           GHC.Generics
 import           Servant.API
 
 
-type API = "all" :> ReqBody '[PlainText] TL.Text :> Post '[JSON] All
+type QAPI = "all" :> ReqBody '[PlainText] TL.Text :> Post '[JSON] All
         :<|> "joins" :> ReqBody '[PlainText] TL.Text :> Post '[JSON] Join
         :<|> "tables" :> ReqBody '[PlainText] TL.Text :>  Post '[JSON] Table
         :<|> "columns" :> ReqBody '[PlainText] TL.Text :> Post '[JSON] Column
         :<|> "lineage" :> ReqBody '[PlainText] TL.Text :> Post '[JSON] Lineage
 
-qApi :: Proxy API
+qApi :: Proxy QAPI
 qApi = Proxy
 
 data All = All {

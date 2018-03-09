@@ -5,9 +5,11 @@ import           Control.Monad.IO.Class          (liftIO)
 -- import           Control.Monad.Trans.Except
 import           Data.Either
 import           Data.Functor                    (void)
+import qualified Data.HashMap.Strict             as HMS
 import qualified Data.List                       as L
 import qualified Data.Map                        as M
 import           Data.Monoid                     ((<>))
+import           Data.Proxy
 import qualified Data.Set                        as S
 import qualified Data.Text.Lazy                  as TL
 import qualified Data.Vector                     as V
@@ -24,7 +26,7 @@ import           Network.Wai
 import           Network.Wai.Handler.Warp
 import           Servant
 
-server :: Server API
+server :: Server QAPI
 server = allH :<|> joinH :<|> tableH :<|> colH :<|> lineageH
   where
     joinH :: TL.Text -> Handler Join
@@ -147,51 +149,27 @@ parseAndResolve sql =
     case
             runResolverWarn (resolveVerticaStatement $ parse sql)
                             (Proxy :: Proxy Vertica)
-                            catalog
+                            cata
         of
             (Right queryResolved, resolutions) ->
                 (queryResolved, lefts resolutions)
             (Left err, _) -> error $ show err
 
+cata :: Catalog
+cata = makeDefaultingCatalog catalogMap [defaultSchema] defaultDatabase
+    where
+    defaultDatabase :: DatabaseName ()
+    defaultDatabase = DatabaseName () "defaultDatabase"
 
+    defaultSchema :: UQSchemaName ()
+    defaultSchema = mkNormalSchema "public" ()
 
+    foo :: (UQTableName (), SchemaMember)
+    foo = ( QTableName () None "", persistentTable [ QColumnName () None "" ] )
 
+    bar :: (UQTableName (), SchemaMember)
+    bar = ( QTableName () None "", persistentTable [ QColumnName () None "" ] )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    catalogMap :: CatalogMap
+    catalogMap = HMS.singleton defaultDatabase $
+                        HMS.fromList [ ( defaultSchema, HMS.fromList [ foo , bar ] ) ]

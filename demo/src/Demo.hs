@@ -1,5 +1,5 @@
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 
 module Demo
     ( parse
@@ -12,34 +12,35 @@ module Demo
     , demoAllAnalyses
     ) where
 
-import Database.Sql.Type hiding (catalog)
+import           Database.Sql.Type               hiding (catalog)
 
-import           Database.Sql.Util.Scope (runResolverWarn)
-import qualified Database.Sql.Vertica.Parser as VP
-import           Database.Sql.Vertica.Type (VerticaStatement, resolveVerticaStatement, Vertica)
+import           Database.Sql.Util.Scope         (runResolverWarn)
+import qualified Database.Sql.Vertica.Parser     as VP
+import           Database.Sql.Vertica.Type       (Vertica, VerticaStatement,
+                                                  resolveVerticaStatement)
 
-import Database.Sql.Util.Tables
-import Database.Sql.Util.Columns
-import Database.Sql.Util.Joins
-import Database.Sql.Util.Lineage.Table
+import           Database.Sql.Util.Columns
+import           Database.Sql.Util.Joins
+import           Database.Sql.Util.Lineage.Table
+import           Database.Sql.Util.Tables
 
 import           Data.Either
-import           Data.Functor (void)
-import qualified Data.HashMap.Strict as HMS
-import qualified Data.List as L
-import qualified Data.Map as M
+import           Data.Functor                    (void)
+import qualified Data.HashMap.Strict             as HMS
+import qualified Data.List                       as L
+import qualified Data.Map                        as M
 import           Data.Proxy
-import qualified Data.Set as S
-import qualified Data.Text.Lazy as TL
+import qualified Data.Set                        as S
+import qualified Data.Text.Lazy                  as TL
 
-import Text.PrettyPrint
+import           Text.PrettyPrint
 
 
 -- let's provide a really simple function to do parsing!
 -- It will have ungraceful error handling.
 parse :: TL.Text -> VerticaStatement RawNames ()
 parse sql = case void <$> VP.parse sql of
-    Right q -> q
+    Right q  -> q
     Left err -> error $ show err
 
 -- and construct a catalog, with tables `foo` (columns a, b, and c) and `bar` (columns x, y, and z)
@@ -73,7 +74,7 @@ catalog = makeDefaultingCatalog catalogMap [defaultSchema] defaultDatabase
 parseAndResolve :: TL.Text -> (VerticaStatement ResolvedNames (), [ResolutionError ()])
 parseAndResolve sql = case runResolverWarn (resolveVerticaStatement $ parse sql) (Proxy :: Proxy Vertica) catalog of
     (Right queryResolved, resolutions) -> (queryResolved, lefts resolutions)
-    (Left err, _) -> error $ show err
+    (Left err, _)                      -> error $ show err
 
 -- let's run some analyses!
 demoTablesAccessed :: TL.Text -> Doc
@@ -81,7 +82,7 @@ demoTablesAccessed sql = draw $ getTables $ fst $ parseAndResolve sql
   where
     draw :: S.Set FullyQualifiedTableName -> Doc
     draw xs = case S.toList xs of
-                  [] -> text "no tables accessed"
+                  []  -> text "no tables accessed"
                   xs' -> vcat $ map drawFQTN xs'
 
 demoColumnsAccessedByClause :: TL.Text -> Doc
@@ -89,7 +90,7 @@ demoColumnsAccessedByClause sql = draw $ getColumns $ fst $ parseAndResolve sql
   where
     draw :: S.Set (FullyQualifiedColumnName, Clause) -> Doc
     draw xs = case S.toList xs of
-                  [] -> text "no columns accessed"
+                  []  -> text "no columns accessed"
                   xs' -> vcat $ map drawCol xs'
 
     drawCol :: (FullyQualifiedColumnName, Clause) -> Doc
@@ -100,7 +101,7 @@ demoJoins sql = draw $ getJoins $ fst $ parseAndResolve sql
   where
     draw :: S.Set ((FullyQualifiedColumnName, [StructFieldName ()]), (FullyQualifiedColumnName, [StructFieldName ()])) -> Doc
     draw xs = case S.toList xs of
-                  [] -> text "no joins"
+                  []  -> text "no joins"
                   xs' -> vcat $ map drawJoin xs'
 
     drawJoin :: ((FullyQualifiedColumnName, [StructFieldName ()]), (FullyQualifiedColumnName, [StructFieldName ()])) -> Doc
@@ -111,7 +112,7 @@ demoTableLineage sql = draw $ getTableLineage $ fst $ parseAndResolve sql
   where
     draw :: M.Map FQTN (S.Set FQTN) -> Doc
     draw xs = case M.assocs xs of
-                  [] -> text "no tables modified"
+                  []  -> text "no tables modified"
                   xs' -> vcat $ map drawAssoc xs'
 
     drawAssoc :: (FQTN, S.Set FQTN) -> Doc
